@@ -12,7 +12,6 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 # mbstring opcache pdo mysql
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
-RUN docker-php-ext-install -j$(nproc) bcmath
 
 # gd zip
 RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev \
