@@ -24,6 +24,7 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev lib
         --with-jpeg-dir \
         --with-zlib-dir \
     && docker-php-ext-install -j${NPROC} gd zip \
+    && docker-php-ext-install -j$(nproc) bcmath \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
 
 # redis
