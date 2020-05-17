@@ -25,6 +25,17 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev lib
     && docker-php-ext-install -j${NPROC} gd zip \
     && docker-php-ext-install -j${NPROC} bcmath \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
+    
+# xlswriter
+ENV XLSWRITER_VERSION 1.3.4.1
+RUN apk update \
+    && apk add --no-cache php7-pear php7-dev zlib-dev re2c gcc g++ make curl \
+    && curl -fsSL "https://pecl.php.net/get/xlswriter-${XLSWRITER_VERSION}.tgz" -o xlswriter.tgz \
+    && mkdir -p /tmp/xlswriter \
+    && tar -xf xlswriter.tgz -C /tmp/xlswriter --strip-components=1 \
+    && rm xlswriter.tgz \
+    && cd /tmp/xlswriter \
+    && phpize && ./configure --enable-reader && make && make install
 
 # redis
 ENV PHPREDIS_VERSION 4.0.0RC1
