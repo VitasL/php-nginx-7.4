@@ -54,8 +54,10 @@ RUN apk update && apk add autoconf openssl-dev g++ make && \
 	pecl channel-update pecl.php.net && \
     pecl install mongodb && \
     docker-php-ext-enable mongodb && \
+    pecl install xlswriter && \
+    docker-php-ext-enable xlswriter && \
     apk del --purge autoconf openssl-dev g++ make
-
+    
 COPY ./php-fpm/docker-php-entrypoint /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-php-entrypoint
