@@ -19,10 +19,7 @@ RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz 
     && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
     && rm -r swoole.tar.gz \
     && cd swoole \
-    && phpize \
-    && ./configure --enable-async-redis --enable-openssl --enable-http2 \
-    && make -j$(nproc) \
-    && make install \
+    && phpize && ./configure --enable-async-redis --enable-openssl --enable-http2  && make && make install
     && docker-php-ext-enable swoole
 
 # gd zip
