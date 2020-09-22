@@ -14,10 +14,11 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
 # Swoole extension
-RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.zip -O swoole.zip \
+RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz -O swoole.tar.gz \
     && mkdir -p swoole \
+    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
+    && rm -r swoole.tar.gz \
     && cd swoole \
-    && unzip swoole.zip \
     && phpize \
     && ./configure --enable-async-redis --enable-openssl --enable-http2 \
     && make -j$(nproc) \
