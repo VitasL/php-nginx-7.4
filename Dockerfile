@@ -1,6 +1,6 @@
 FROM php:7.2-fpm-alpine
 LABEL maintainer="jaosn <jason@gymoo.com>"
-ENV SWOOLE_VERSION 4.4.x
+
 
 # timezone
 ENV TIMEZONE Asia/Shanghai
@@ -12,27 +12,6 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 
 # mbstring opcache pdo mysql
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
-
-# m4 
-RUN wget http://ftp.gnu.org/gnu/m4/m4-1.4.9.tar.gz \
-    && tar -zvxf m4-1.4.9.tar.gz \
-    && cd m4-1.4.9/ \
-    && ./configure && make && make install \
-    
-#autoconf
-RUN wget http://ftp.gnu.org/gnu/autoconf/autoconf-2.62.tar.gz \
-    && tar -zvxf autoconf-2.62.tar.gz \
-    && cd autoconf-2.62/ \
-    && ./configure && make && make install \
-
-# Swoole extension
-RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz -O swoole.tar.gz \
-    && mkdir -p swoole \
-    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
-    && rm -r swoole.tar.gz \
-    && cd swoole \
-    && phpize && ./configure --enable-async-redis --enable-openssl --enable-http2  && make && make install \
-    && docker-php-ext-enable swoole
 
 # gd zip
 RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev \
@@ -57,6 +36,18 @@ RUN apk update \
     && rm xlswriter.tgz \
     && cd /tmp/xlswriter \
     && phpize && ./configure --enable-reader && make && make install
+    
+# Swoole extension
+ENV SWOOLE_VERSION 4.4.x
+RUN apk update \
+    && apk add --no-cache php7-pear php7-dev zlib-dev re2c gcc autoconf openssl-dev g++ make curl \
+    && curl -fsSL "https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz" -o swoole.tar.gz \
+    && mkdir -p swoole \
+    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
+    && rm swoole.tar.gz \
+    && cd swoole \
+    && phpize && ./configure --enable-async-redis --enable-openssl --enable-http2  && make && make install \
+    && docker-php-ext-enable swoole
 
 # redis
 ENV PHPREDIS_VERSION 4.0.0RC1
@@ -78,6 +69,8 @@ RUN apk update && apk add autoconf openssl-dev g++ make && \
     pecl install xlswriter && \
     docker-php-ext-enable xlswriter && \
     apk del --purge autoconf openssl-dev g++ make
+    
+
     
 COPY ./php-fpm/docker-php-entrypoint /usr/local/bin/
 
