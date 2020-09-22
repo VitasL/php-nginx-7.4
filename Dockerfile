@@ -13,6 +13,18 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 # mbstring opcache pdo mysql
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
+# m4 
+RUN wget http://ftp.gnu.org/gnu/m4/m4-1.4.9.tar.gz \
+    && tar -zvxf m4-1.4.9.tar.gz \
+    && cd m4-1.4.9/ \
+    && ./configure && make && make install \
+    
+#autoconf
+RUN wget http://ftp.gnu.org/gnu/autoconf/autoconf-2.62.tar.gz \
+    && tar -zvxf autoconf-2.62.tar.gz \
+    && cd autoconf-2.62/ \
+    && ./configure && make && make install \
+
 # Swoole extension
 RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz -O swoole.tar.gz \
     && mkdir -p swoole \
