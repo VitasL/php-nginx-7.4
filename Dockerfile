@@ -1,7 +1,6 @@
 FROM php:7.2-fpm-alpine
 LABEL maintainer="jaosn <jason@gymoo.com>"
-ENV SWOOLE_VERSION 4.3.2
-ENV EASYSWOOLE_VERSION 3.x-dev
+ENV SWOOLE_VERSION 4.4.x
 
 # timezone
 ENV TIMEZONE Asia/Shanghai
@@ -15,18 +14,14 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
 # Swoole extension
-RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz -O swoole.tar.gz \
+RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.zip -O swoole.zip \
     && mkdir -p swoole \
-    && tar -xf swoole.tar.gz -C swoole --strip-components=1 \
-    && rm swoole.tar.gz \
-    && ( \
-        cd swoole \
-        && phpize \
-        && ./configure --enable-async-redis --enable-mysqlnd --enable-openssl --enable-http2 \
-        && make -j$(nproc) \
-        && make install \
-    ) \
-    && rm -r swoole \
+    && cd swoole \
+    && unzip swoole.zip \
+    && phpize \
+    && ./configure --enable-async-redis --enable-openssl --enable-http2 \
+    && make -j$(nproc) \
+    && make install \
     && docker-php-ext-enable swoole
 
 # gd zip
