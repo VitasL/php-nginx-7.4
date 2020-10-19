@@ -79,6 +79,9 @@ RUN chmod +x /usr/local/bin/docker-php-entrypoint
 # nginx
 RUN apk add nginx && mkdir /run/nginx/
 
+# ffmpeg
+RUN apk add yasm && apk add ffmpeg
+
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./nginx/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 
