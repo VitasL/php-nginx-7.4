@@ -14,7 +14,7 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
 # gd zip
-RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev  libjpeg-turbo-dev \
+RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
     && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
     && docker-php-ext-configure gd \
         --with-gd \
@@ -24,11 +24,8 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev  li
         --with-zlib-dir \
     && docker-php-ext-install -j${NPROC} gd zip \
     && docker-php-ext-install -j${NPROC} bcmath \
-    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
-    
-RUN apk add --no-cache gmp gmp-dev \
     && docker-php-ext-install -j${NPROC} gmp \
-    && apk del gmp-dev
+    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
     
 # xlswriter
 ENV XLSWRITER_VERSION 1.3.4.1
