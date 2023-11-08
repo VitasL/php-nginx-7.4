@@ -24,7 +24,6 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev  li
         --with-zlib-dir \
     && docker-php-ext-install -j${NPROC} gd zip \
     && docker-php-ext-install -j${NPROC} bcmath \
-    && docker-php-ext-install -j${NPROC} gmp \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
     
 # xlswriter
