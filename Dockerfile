@@ -14,7 +14,7 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
 
 # gd zip
-RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev \
+RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libgmp-dev libjpeg-turbo-dev \
     && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
     && docker-php-ext-configure gd \
         --with-gd \
@@ -24,6 +24,7 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev lib
         --with-zlib-dir \
     && docker-php-ext-install -j${NPROC} gd zip \
     && docker-php-ext-install -j${NPROC} bcmath \
+    && docker-php-ext-install -j${NPROC} gmp \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
     
 # xlswriter
