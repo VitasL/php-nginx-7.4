@@ -26,6 +26,10 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev  li
     && docker-php-ext-install -j${NPROC} bcmath \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
     
+RUN apk add --no-cache gmp gmp-dev \
+    && docker-php-ext-install -j${NPROC} gmp \
+    && apk del gmp-dev
+    
 # xlswriter
 ENV XLSWRITER_VERSION 1.3.4.1
 RUN apk update \
