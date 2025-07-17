@@ -1,66 +1,61 @@
-FROM php:7.4-fpm-alpine
+FROM php:7.4-fpm
 LABEL maintainer="jaosn <jason@gymoo.com>"
 
+ARG timezone
 
-# timezone
-ENV TIMEZONE Asia/Shanghai
-RUN apk add --no-cache tzdata \
-    && ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime \
-    && echo $TIMEZONE > /etc/timezone
+ENV TIMEZONE=${timezone:-"Asia/Shanghai"} \
+    SWOOLE_VERSION=4.8.0
+
+# Libs
+RUN sed -i "s@http://deb.debian.org@http://mirrors.aliyun.com@g" /etc/apt/sources.list && \
+    # Libs
+    apt-get update && \
+    apt-get install -y curl \
+                       wget \
+                       telnet \
+                       vim \
+                       git \
+                       npm \
+                       zlib1g-dev \
+                       libzip-dev \
+                       libpng-dev \
+                       libjpeg62-turbo-dev \
+                       libfreetype6-dev \
+                       imagemagick \
+                       libmagickwand-dev && \
+
+    # PHP Library
+    docker-php-ext-install zip \
+                           pdo \
+                           pdo_mysql \
+                           opcache \
+                           mysqli \
+                           bcmath \
+                           sockets \
+                           pcntl && \
+    # Clean apt cache
+    rm -rf /var/lib/apt/lists/*
+# composer
+RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');" && \
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
+    php -r "unlink('composer-setup.php');" && \
+    composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/ && \
+    # Redis Mongo
+    pecl install redis mongodb imagick && \
+    rm -rf /tmp/pear && \
+    docker-php-ext-enable redis mongodb imagick && \
+    # GD Library
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
+    docker-php-ext-install -j$(nproc) gd && \
+    # Timezone
+    cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
+    echo "${TIMEZONE}" > /etc/timezone && \
+    echo "[Date]\ndate.timezone=${TIMEZONE}" > /usr/local/etc/php/conf.d/timezone.ini && \
+    # Clean
+    apt-get clean && rm -rf /var/cache/apt/*
 
 COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
-RUN echo 'nameserver 114.114.114.114' > /etc/resolv.conf \
-    # 修改源
-    && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
-    && apk add --no-cache \
-        freetds-dev \
-        freetype \
-        libzip \
-        libmcrypt \
-        libpng \
-        libwebp \
-        libjpeg-turbo \
-    && apk add --no-cache --virtual build-apks \
-        autoconf make gcc \
-        libc-dev \
-        zlib-dev \
-        bzip2-dev \
-        libzip-dev \
-        libmcrypt-dev \
-        libxml2-dev \
-        libpng-dev \
-        libwebp-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-    && cd /usr/local/etc/php \
-    && cp php.ini-production php.ini \
-    # 安装扩展
-    && docker-php-ext-configure gd --with-webp --with-jpeg --with-freetype \
-    && docker-php-ext-install -j$(nproc) mysqli pdo_mysql pdo_dblib gd sockets soap
 
-# xlswriter
-ENV XLSWRITER_VERSION 1.3.4.1
-RUN apk update \
-    && apk add --no-cache php7-pear php7-dev zlib-dev re2c gcc g++ make curl \
-    && curl -fsSL "https://pecl.php.net/get/xlswriter-${XLSWRITER_VERSION}.tgz" -o xlswriter.tgz \
-    && mkdir -p /tmp/xlswriter \
-    && tar -xf xlswriter.tgz -C /tmp/xlswriter --strip-components=1 \
-    && rm xlswriter.tgz \
-    && cd /tmp/xlswriter \
-    && phpize && ./configure --enable-reader && make && make install
-
-
-# redis
-ENV PHPREDIS_VERSION 4.0.0RC1
-RUN apk add --no-cache curl \
-    && curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/$PHPREDIS_VERSION.tar.gz \
-    && tar xfz /tmp/redis.tar.gz \
-    && rm -r /tmp/redis.tar.gz \
-    && mkdir -p /usr/src/php/ext \
-    && mv phpredis-$PHPREDIS_VERSION /usr/src/php/ext/redis \
-    && docker-php-ext-install redis \
-    && rm -rf /usr/src/php \
-    && apk del curl
 
 
 
