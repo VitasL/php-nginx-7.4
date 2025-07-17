@@ -1,4 +1,4 @@
-FROM php:7.2-fpm-alpine
+FROM php:7.4-fpm-alpine
 LABEL maintainer="jaosn <jason@gymoo.com>"
 
 
@@ -26,7 +26,7 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp
     && docker-php-ext-install -j${NPROC} bcmath \
     && docker-php-ext-install -j${NPROC} gmp \
     && apk del freetype-dev libpng-dev libjpeg-turbo-dev
-    
+
 # xlswriter
 ENV XLSWRITER_VERSION 1.3.4.1
 RUN apk update \
@@ -37,7 +37,7 @@ RUN apk update \
     && rm xlswriter.tgz \
     && cd /tmp/xlswriter \
     && phpize && ./configure --enable-reader && make && make install
-    
+
 
 # redis
 ENV PHPREDIS_VERSION 4.0.0RC1
@@ -51,9 +51,9 @@ RUN apk add --no-cache curl \
     && rm -rf /usr/src/php \
     && apk del curl
 
-    
 
-    
+
+
 COPY ./php-fpm/docker-php-entrypoint /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/docker-php-entrypoint
