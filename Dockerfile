@@ -11,7 +11,6 @@ RUN apk add --no-cache tzdata \
 COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 
 # mbstring opcache pdo mysql
-RUN docker-php-ext-install  opcache pdo pdo_mysql mysqli
 
 # gd zip
 #RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
@@ -31,7 +30,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk add --no-cache freetype libpng libjpeg-turbo gmp zlib curl \
     && NPROC=$(nproc) \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j${NPROC} mbstring opcache pdo pdo_mysql mysqli gd zip bcmath gmp \
+    && docker-php-ext-install -j${NPROC} opcache pdo pdo_mysql mysqli gd zip bcmath gmp \
     && apk del .build-deps
 
 # xlswriter
