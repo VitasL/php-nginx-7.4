@@ -9,29 +9,34 @@ RUN apk add --no-cache tzdata \
     && echo $TIMEZONE > /etc/timezone
 
 COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
-
-# mbstring opcache pdo mysql
-
-# gd zip
-#RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
-#    && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
-#    && docker-php-ext-configure gd \
-#        --with-gd \
-#        --with-freetype-dir \
-#        --with-png-dir \
-#        --with-jpeg-dir \
-#        --with-zlib-dir \
-#    && docker-php-ext-install -j${NPROC} gd zip \
-#    && docker-php-ext-install -j${NPROC} bcmath \
-#    && docker-php-ext-install -j${NPROC} gmp \
-#    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
-RUN apk add --no-cache --virtual .build-deps \
-        autoconf gcc g++ make oniguruma-dev freetype-dev libpng-dev libjpeg-turbo-dev gmp-dev zlib-dev re2c php-pear php-dev curl \
-    && apk add --no-cache freetype libpng libjpeg-turbo gmp zlib curl \
-    && NPROC=$(nproc) \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j${NPROC} opcache pdo pdo_mysql mysqli gd zip bcmath gmp \
-    && apk del .build-deps
+RUN echo 'nameserver 114.114.114.114' > /etc/resolv.conf \
+    # 修改源
+    && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
+    && apk add --no-cache \
+        freetds-dev \
+        freetype \
+        libzip \
+        libmcrypt \
+        libpng \
+        libwebp \
+        libjpeg-turbo \
+    && apk add --no-cache --virtual build-apks \
+        autoconf make gcc \
+        libc-dev \
+        zlib-dev \
+        bzip2-dev \
+        libzip-dev \
+        libmcrypt-dev \
+        libxml2-dev \
+        libpng-dev \
+        libwebp-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+    && cd /usr/local/etc/php \
+    && cp php.ini-production php.ini \
+    # 安装扩展
+    && docker-php-ext-configure gd --with-webp --with-jpeg --with-freetype \
+    && docker-php-ext-install -j$(nproc) mysqli pdo_mysql pdo_dblib gd sockets soap
 
 # xlswriter
 ENV XLSWRITER_VERSION 1.3.4.1
@@ -66,9 +71,6 @@ RUN chmod +x /usr/local/bin/docker-php-entrypoint
 
 # nginx
 RUN apk add nginx && mkdir /run/nginx/
-
-# ffmpeg
-RUN apk add yasm && apk add ffmpeg
 
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./nginx/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
