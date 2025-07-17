@@ -14,18 +14,25 @@ COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
 RUN docker-php-ext-install  opcache pdo pdo_mysql mysqli
 
 # gd zip
-RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
-    && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
-    && docker-php-ext-configure gd \
-        --with-gd \
-        --with-freetype-dir \
-        --with-png-dir \
-        --with-jpeg-dir \
-        --with-zlib-dir \
-    && docker-php-ext-install -j${NPROC} gd zip \
-    && docker-php-ext-install -j${NPROC} bcmath \
-    && docker-php-ext-install -j${NPROC} gmp \
-    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
+#RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
+#    && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
+#    && docker-php-ext-configure gd \
+#        --with-gd \
+#        --with-freetype-dir \
+#        --with-png-dir \
+#        --with-jpeg-dir \
+#        --with-zlib-dir \
+#    && docker-php-ext-install -j${NPROC} gd zip \
+#    && docker-php-ext-install -j${NPROC} bcmath \
+#    && docker-php-ext-install -j${NPROC} gmp \
+#    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
+RUN apk add --no-cache --virtual .build-deps \
+        autoconf gcc g++ make oniguruma-dev freetype-dev libpng-dev libjpeg-turbo-dev gmp-dev zlib-dev re2c php-pear php-dev curl \
+    && apk add --no-cache freetype libpng libjpeg-turbo gmp zlib curl \
+    && NPROC=$(nproc) \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j${NPROC} mbstring opcache pdo pdo_mysql mysqli gd zip bcmath gmp \
+    && apk del .build-deps
 
 # xlswriter
 ENV XLSWRITER_VERSION 1.3.4.1
