@@ -23,7 +23,6 @@ RUN sed -i "s@http://deb.debian.org@http://mirrors.aliyun.com@g" /etc/apt/source
                        libfreetype6-dev \
                        imagemagick \
                        libmagickwand-dev && \
-
     # PHP Library
     docker-php-ext-install zip \
                            pdo \
@@ -55,10 +54,6 @@ RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.ph
     apt-get clean && rm -rf /var/cache/apt/*
 
 COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
-
-
-
-
 
 COPY ./php-fpm/docker-php-entrypoint /usr/local/bin/
 
