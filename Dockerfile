@@ -1,39 +1,58 @@
-FROM php:7.4-fpm
+FROM php:7.2-fpm-alpine
 LABEL maintainer="jaosn <jason@gymoo.com>"
 
-ARG timezone
 
-ENV TIMEZONE=${timezone:-"Asia/Shanghai"} \
-    SWOOLE_VERSION=4.8.0
-
-
-# Libs
-RUN sed -i "s|http://deb.debian.org|http://mirrors.aliyun.com|g" /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        curl wget telnet vim git npm zlib1g-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev imagemagick libmagickwand-dev \
-    && docker-php-ext-install zip pdo pdo_mysql opcache mysqli bcmath sockets pcntl \
-    && rm -rf /var/lib/apt/lists/*
-# composer
-RUN php -r "copy('https://install.phpcomposer.com/installer', 'composer-setup.php');" && \
-    php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
-    php -r "unlink('composer-setup.php');" && \
-    composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/ && \
-    # Redis Mongo
-    pecl install redis mongodb imagick && \
-    rm -rf /tmp/pear && \
-    docker-php-ext-enable redis mongodb imagick && \
-    # GD Library
-    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ && \
-    docker-php-ext-install -j$(nproc) gd && \
-    # Timezone
-    cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && \
-    echo "${TIMEZONE}" > /etc/timezone && \
-    echo "[Date]\ndate.timezone=${TIMEZONE}" > /usr/local/etc/php/conf.d/timezone.ini && \
-    # Clean
-    apt-get clean && rm -rf /var/cache/apt/*
+# timezone
+ENV TIMEZONE Asia/Shanghai
+RUN apk add --no-cache tzdata \
+    && ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime \
+    && echo $TIMEZONE > /etc/timezone
 
 COPY ./php-fpm/php.ini /usr/local/etc/php/php.ini
+
+# mbstring opcache pdo mysql
+RUN docker-php-ext-install mbstring opcache pdo pdo_mysql mysqli
+
+# gd zip
+RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev gmp gmp-dev libjpeg-turbo-dev \
+    && NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) \
+    && docker-php-ext-configure gd \
+        --with-gd \
+        --with-freetype-dir \
+        --with-png-dir \
+        --with-jpeg-dir \
+        --with-zlib-dir \
+    && docker-php-ext-install -j${NPROC} gd zip \
+    && docker-php-ext-install -j${NPROC} bcmath \
+    && docker-php-ext-install -j${NPROC} gmp \
+    && apk del freetype-dev libpng-dev libjpeg-turbo-dev
+
+# xlswriter
+ENV XLSWRITER_VERSION 1.3.4.1
+RUN apk update \
+    && apk add --no-cache php7-pear php7-dev zlib-dev re2c gcc g++ make curl \
+    && curl -fsSL "https://pecl.php.net/get/xlswriter-${XLSWRITER_VERSION}.tgz" -o xlswriter.tgz \
+    && mkdir -p /tmp/xlswriter \
+    && tar -xf xlswriter.tgz -C /tmp/xlswriter --strip-components=1 \
+    && rm xlswriter.tgz \
+    && cd /tmp/xlswriter \
+    && phpize && ./configure --enable-reader && make && make install
+
+
+# redis
+ENV PHPREDIS_VERSION 4.0.0RC1
+RUN apk add --no-cache curl \
+    && curl -L -o /tmp/redis.tar.gz https://github.com/phpredis/phpredis/archive/$PHPREDIS_VERSION.tar.gz \
+    && tar xfz /tmp/redis.tar.gz \
+    && rm -r /tmp/redis.tar.gz \
+    && mkdir -p /usr/src/php/ext \
+    && mv phpredis-$PHPREDIS_VERSION /usr/src/php/ext/redis \
+    && docker-php-ext-install redis \
+    && rm -rf /usr/src/php \
+    && apk del curl
+
+
+
 
 COPY ./php-fpm/docker-php-entrypoint /usr/local/bin/
 
@@ -41,6 +60,12 @@ RUN chmod +x /usr/local/bin/docker-php-entrypoint
 
 # nginx
 RUN apk add nginx && mkdir /run/nginx/
+
+# ✅ 安装 poppler-utils（用于 PDF 处理）
+RUN apk add --no-cache poppler-utils
+
+# ffmpeg
+RUN apk add yasm && apk add ffmpeg
 
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./nginx/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
